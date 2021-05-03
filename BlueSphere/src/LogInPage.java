@@ -481,7 +481,7 @@ public class LogInPage implements ActionListener
 		searchButton2.addActionListener(this);
 		frame.add(searchButton2);
 		
-		JLabel searchResults = new JLabel("Seach Results:");
+		JLabel searchResults = new JLabel("Search Results:");
 		searchResults.setFont(new Font("",Font.PLAIN, 40));
 		searchResults.setBounds(200, 50, 880, 80);
 		frame.add(searchResults);
