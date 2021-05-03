@@ -15,18 +15,20 @@ public class CreateAccountWindow implements ActionListener
 {
 	//component fields
 	private JFrame frame;
-	private ImageIcon logoImage = new ImageIcon("BlueSphereSmall.png");
+	private ImageIcon logoImage = new ImageIcon(LogInPage.class.getResource("/images/BlueSphereSmall.png"));
 	private JButton createAccountButton;
 	private JTextField username;
 	private JTextField password;
 	
+	//class constructor
 	public CreateAccountWindow()
 	{
-		createWindow();
+		createWindow(); //create the pop up window
 		createComponents();
 		frame.repaint();
 	}
 	
+	//create window's frame
 	public void createWindow()
 	{
 		frame = new JFrame();
@@ -39,6 +41,7 @@ public class CreateAccountWindow implements ActionListener
 		frame.setIconImage(logoImage.getImage());
 	}
 	
+	//create window's components
 	public void createComponents()
 	{
 		JLabel logo = new JLabel();
@@ -69,24 +72,24 @@ public class CreateAccountWindow implements ActionListener
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent e) 
+	public void actionPerformed(ActionEvent e) //is called if create account button is clicked
 	{
-		if(username.getText().length() > 0 && password.getText().length() > 0)
+		if(username.getText().length() > 0 && password.getText().length() > 0) //check to see if a username and password are entered
 		{
 			try 
 			{
 				File file = new File(username.getText() + ".txt");
-				if (file.createNewFile()) 
+				if (file.createNewFile()) //try to create a file using user name
 				{
-					FileWriter myWriter = new FileWriter(username.getText() + ".txt");
-					myWriter.write(username.getText() + "\n");
-			    	myWriter.write(password.getText() + "\n");
+					FileWriter myWriter = new FileWriter(username.getText() + ".txt"); //create new file if username available
+					myWriter.write(username.getText() + "\n"); //add username to user file
+			    	myWriter.write(password.getText() + "\n"); //add password to user file
 			    	myWriter.close();
-			    	frame.dispose();
+			    	frame.dispose(); //delete pop up screen
 			    } 
 				else 
 			    {
-					JLabel errorLabel = new JLabel("Username already exists");
+					JLabel errorLabel = new JLabel("Username already exists"); //tell user file already exists if a file is on record
 					errorLabel.setBounds(10, 215, 300, 25);
 					frame.add(errorLabel);
 					frame.repaint();
@@ -101,7 +104,7 @@ public class CreateAccountWindow implements ActionListener
 		}
 		else
 		{
-			JLabel errorLabel = new JLabel("Please enter both a username and a password");
+			JLabel errorLabel = new JLabel("Please enter both a username and a password"); //ask user to enter both a username and password if they failed to do so
 			errorLabel.setBounds(10, 215, 300, 25);
 			frame.add(errorLabel);
 			frame.repaint();

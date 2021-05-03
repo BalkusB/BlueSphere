@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
@@ -23,10 +24,10 @@ import javax.swing.JTextField;
 
 public class LogInPage implements ActionListener
 {
-	//Component fields
+	//Component fields: Global so that action listener can reference them
 	private JFrame frame;
-	private ImageIcon logoImage = new ImageIcon("BlueSphereSmall.png");
-	private ImageIcon movieImage = new ImageIcon("Jaws.jpg");
+	private ImageIcon logoImage = new ImageIcon(LogInPage.class.getResource("/images/BlueSphereSmall.png"));
+	private ImageIcon movieImage = new ImageIcon(LogInPage.class.getResource("/images/Jaws.jpg"));
 	private JButton logInButton;
 	private JButton createAccountButton;
 	private JButton searchButton;
@@ -61,10 +62,7 @@ public class LogInPage implements ActionListener
 	//List holding displayed movies
 	private ArrayList<Movie> moviesDisplayed = new ArrayList<Movie>();
 	
-	//movie value holding movie being played
-	private Movie movieBeingPlayed;
-	
-	//class constructor
+	//class constructor: Creates list of movies, application frame,then calls the method to create log in page
 	public LogInPage()
 	{
 		createMovies();
@@ -73,22 +71,22 @@ public class LogInPage implements ActionListener
 		frame.repaint();
 	}
 	
-	//create user object from given file
+	//create user object from file matching the name of the user logging in
 	public void createUser(String user)
 	{
 		try
 		{
-			File file = new File(user + ".txt");
+			File file = new File(user + ".txt");//locate file and read username and password
 		    Scanner myReader = new Scanner(file);
 		    String username = myReader.nextLine();
 		    String password = myReader.nextLine();
-		    ArrayList<String> watchedMovies = new ArrayList<String>();
+		    ArrayList<String> watchedMovies = new ArrayList<String>();//create empty lists to be filled with user's seen movies and genres
 		    ArrayList<String> favoriteGenres = new ArrayList<String>();
-		    while (myReader.hasNextLine()) 
+		    while (myReader.hasNextLine()) //add all movies/genres listed to to watched movies list
 		    {
 		    	watchedMovies.add(myReader.nextLine());
 		    }
-		    for(int i = 0; i < watchedMovies.size(); i++)
+		    for(int i = 0; i < watchedMovies.size(); i++) //remove genres from watched movies list and add to genres
 			{
 		    	if(watchedMovies.get(i).equals("Comedy") || watchedMovies.get(i).equals("Action") || 
 		    			watchedMovies.get(i).equals("Horror") || watchedMovies.get(i).equals("Romance") || 
@@ -99,7 +97,7 @@ public class LogInPage implements ActionListener
 		    		i--;
 		    	}
 			}
-		    currentUser = new User(username, password, watchedMovies, favoriteGenres);
+		    currentUser = new User(username, password, watchedMovies, favoriteGenres); //create user object with information derived from user file
 		}
 		catch (FileNotFoundException e) 
 		{
@@ -111,46 +109,39 @@ public class LogInPage implements ActionListener
 	//reads movies from file and sends them to array list
 	public void createMovies()
 	{
-		try
-		{
-			File file = new File("Movies.txt");
-		    Scanner myReader = new Scanner(file);
-		    while (myReader.hasNextLine()) 
-		    {
-		    	String title = myReader.nextLine();
-		    	ArrayList<String> genres = parseGenres(myReader.nextLine());
-		    	movies.add(new Movie(title, genres));
-		    }
-		}
-		catch (FileNotFoundException e) 
-		{
-		    System.out.println("An error occurred.");
-		    e.printStackTrace();
-		}
+		File file = new File("Movies.txt"); //locate movie file and scanner object
+		InputStream stream = LogInPage.class.getResourceAsStream("/images/Movies.txt");
+	    Scanner myReader = new Scanner(stream);
+	    while (myReader.hasNextLine()) //add all movies to movie list field from file
+	    {
+	    	String title = myReader.nextLine();
+	    	ArrayList<String> genres = parseGenres(myReader.nextLine()); //read movie's genres, add them to a list
+	    	movies.add(new Movie(title, genres)); //add movies to movie list with information gathered from movie file
+	    }
 	}
 	
 	//parses genres from file
 	public ArrayList<String> parseGenres(String s)
 	{
+		//movies in file are every other line with the genres of the movies listed underneath them. Method turns listed genres to an array list
+		String[] genres = s.split(" "); //split line of genres to an array containing each genre
 		
-		String[] genres = s.split(" ");
-		
-		ArrayList<String> toRet = new ArrayList<String>();
+		ArrayList<String> toRet = new ArrayList<String>(); //create empty array list
 		for(int i = 0; i < genres.length; i++)
 		{
-			toRet.add(genres[i]);
+			toRet.add(genres[i]); //add movies from temporary genre list to new array list
 		}
-		return toRet;
+		return toRet; //return array list holding each genre
 	}
 	
 	//algorithm to recommend movies and puts them in displayed movies
 	public void recommendMovies()
 	{
-		moviesDisplayed.clear();
-		Collections.shuffle(movies);
+		moviesDisplayed.clear(); //empty the displayed movies so it's empty ready to be filled
+		Collections.shuffle(movies); //shuffle so recommended movies aren't always the same
 		currentUser.printUser();
 		ArrayList<Movie> tempMovies = (ArrayList<Movie>) movies.clone();
-		for(int i = 0; i < tempMovies.size(); i++)
+		for(int i = 0; i < tempMovies.size(); i++) //remove watched movies from pool to be selected
 		{
 			for(String title : currentUser.getWatchedMovies())
 				if(tempMovies.get(i).getTitle().equals(title))
@@ -160,7 +151,7 @@ public class LogInPage implements ActionListener
 					break;
 				}
 		}
-		for(int i = 0; i < tempMovies.size(); i++)
+		for(int i = 0; i < tempMovies.size(); i++) //recommend unwatched movies that are of user's liked genres
 		{
 			boolean breaker = false;
 			for(String genre : tempMovies.get(i).getGenres())
@@ -182,10 +173,18 @@ public class LogInPage implements ActionListener
 				if(breaker)
 					break;
 			}
-			if(moviesDisplayed.size() == 5)
+			if(moviesDisplayed.size() == 5) //stop algorithm if 5 movies are recommended
 				return;
 		}
-		if(moviesDisplayed.size() < 5)
+		for(int i = 0; i < tempMovies.size(); i++) //recommend movies that user has not seen but are not of their liked genres
+		{
+			moviesDisplayed.add(tempMovies.get(i));
+			tempMovies.remove(i);
+			i--;
+			if(moviesDisplayed.size() == 5) //stop algorithm if 5 movies are recommended
+				return;
+		}
+		if(moviesDisplayed.size() < 5) //readd movies user has seen to the pool, all unseen movies are exhausted if the algorithm makes it here
 		{
 			tempMovies = (ArrayList<Movie>) movies.clone();
 			for(int i = 0; i < tempMovies.size(); i++)
@@ -198,7 +197,7 @@ public class LogInPage implements ActionListener
 						break;
 					}
 			}
-			for(int i = 0; i < tempMovies.size(); i++)
+			for(int i = 0; i < tempMovies.size(); i++) //recommend movies user has already seen that are of their favorite genres
 			{
 				for(String genre : tempMovies.get(i).getGenres())
 				{
@@ -219,12 +218,12 @@ public class LogInPage implements ActionListener
 					if(breaker)
 						break;
 				}
-				if(moviesDisplayed.size() == 5)
+				if(moviesDisplayed.size() == 5) //stop algorithm if 5 movies are recommended
 					return;
 			}
 		}
 		int i = 0;
-		while(moviesDisplayed.size() < 5)
+		while(moviesDisplayed.size() < 5) //recommend any movie, all other options are exhausted if the algorithm makes it here
 		{
 			boolean unadded = true;
 			for(Movie movie : moviesDisplayed)
@@ -240,8 +239,8 @@ public class LogInPage implements ActionListener
 	public void searchMovies(String genre)
 	{
 		moviesDisplayed.clear();
-		ArrayList<Movie> tempMovies = (ArrayList<Movie>) movies.clone();
-		for(int i = 0; i < 4; i++)
+		ArrayList<Movie> tempMovies = (ArrayList<Movie>) movies.clone(); //clone so movies can be deleted once added to prevent duplicates
+		for(int i = 0; i < 4; i++) //search temporary list for movies of the inputted genre
 		{
 			for(int i2 = 0; i2 < tempMovies.size(); i2++)
 			{
@@ -250,7 +249,7 @@ public class LogInPage implements ActionListener
 				{
 					if(genre.equals(genre2))
 					{
-						moviesDisplayed.add(tempMovies.get(i2));
+						moviesDisplayed.add(tempMovies.get(i2)); //add movies to display of they match
 						tempMovies.remove(i2);
 						breaker = true;
 						break;
@@ -262,15 +261,16 @@ public class LogInPage implements ActionListener
 		}
 	}
 	
+	//search for movies given a String input to match
 	public void searchMovies2(String search)
 	{
 		moviesDisplayed.clear();
-		ArrayList<Movie> tempMovies = (ArrayList<Movie>) movies.clone();
+		ArrayList<Movie> tempMovies = (ArrayList<Movie>) movies.clone(); //clone so movies can be deleted once added to prevent duplicates
 		for(int i = 0; i < 4; i++)
 		{
 			for(int i2 = 0; i2 < tempMovies.size(); i2++)
 			{
-				if(tempMovies.get(i2).getTitle().contains(search))
+				if(tempMovies.get(i2).getTitle().contains(search)) //add movie if they contain the search String
 				{
 					moviesDisplayed.add(tempMovies.get(i2));
 					tempMovies.remove(i2);
@@ -284,20 +284,13 @@ public class LogInPage implements ActionListener
 	public void createWindow()
 	{
 		frame = new JFrame();
-		
-		//panel = new JPanel();
-		//panel.setBorder(BorderFactory.createEmptyBorder(100, 100, 500, 1000));
-		//panel.setLayout(null);
-		
-		//frame.add(panel);
-		frame.setLayout(null);
+
+		frame.setLayout(null); //set frame attributes
 		frame.setSize(1000, 500);
 		frame.setResizable(false);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		
-		frame.setIconImage(logoImage.getImage());
-		//panel.setBackground(Color.WHITE);
+		frame.setIconImage(logoImage.getImage());;
 	}
 	
 	//create log in page
@@ -322,12 +315,11 @@ public class LogInPage implements ActionListener
 		frame.setTitle("Blue Sphere: Search Page");
 	}
 	
-	//create search page
+	//create play movie page
 	public void playMovie(Movie movie)
 	{
 		createMovieComponents(movie);
 		frame.setTitle("Blue Sphere: " + movie.getTitle());
-		movieBeingPlayed = movie;
 	}
 	
 	//create watching movie page
@@ -530,11 +522,11 @@ public class LogInPage implements ActionListener
 		frame.add(searchGenre);
 	}
 	
-	//create searched movies
+	//create searched movies, independent of search page so that search page can have no movies with no search, and variable amounts depending on how many match search
 	public void createSearchedMovies()
 	{
-		int x = 200;
-		for(Movie movie : moviesDisplayed)
+		int x = 200; //starting x position, increment to draw properly
+		for(Movie movie : moviesDisplayed) //for each movie that matches search draw it
 		{
 			JLabel movie1 = new JLabel(movie.getTitle(), JLabel.CENTER);
 			movie1.setBounds(x, 120, 180, 20);
@@ -548,6 +540,7 @@ public class LogInPage implements ActionListener
 			x += 190;
 		}
 		
+		//draw buttons at correct location for movies that match search
 		if(moviesDisplayed.size() > 0)
 		{
 			watchMovie1 = new JButton("Watch");
@@ -651,19 +644,19 @@ public class LogInPage implements ActionListener
 		try 
 		{
 			File file = new File(username.getText() + ".txt");
-			if(file.exists()) 
+			if(file.exists()) //find if a file exists for user attempting to log in
 			{
-				Scanner myReader = new Scanner(file);
+				Scanner myReader = new Scanner(file); //if file exists, check the file to see if password matches
 			    String user = myReader.nextLine();
 			    String pass = myReader.nextLine();
-			    if(username.getText().equals(user) && password.getText().equals(pass))
+			    if(username.getText().equals(user) && password.getText().equals(pass)) //if password matches, log user in
 			    {
 			    	createUser(user);
 			    	frame.getContentPane().removeAll();
 			    	frame.repaint();
 			    	createMainMenu();
 			    }
-			    else
+			    else //if password does not match, reject and give user an error
 			    {
 			    	frame.getContentPane().removeAll();
 					frame.repaint();
@@ -674,7 +667,7 @@ public class LogInPage implements ActionListener
 					frame.repaint();
 			    }
 		    } 
-			else 
+			else //if username is not on file, reject and tell username does not exist
 		    {
 				frame.getContentPane().removeAll();
 				frame.repaint();
@@ -692,9 +685,10 @@ public class LogInPage implements ActionListener
 		}
 	}
 	
+	//log out button was clicked
 	public void logOutButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //return user to log in page
 		frame.repaint();
 		createLogInPage();
 	}
@@ -702,13 +696,13 @@ public class LogInPage implements ActionListener
 	//create account button was clicked
 	public void createAccountButton()
 	{
-		CreateAccountWindow popup = new CreateAccountWindow();
+		CreateAccountWindow popup = new CreateAccountWindow(); //create the create account pop up window for user to make account
 	}
 	
 	//search button was clicked
 	public void searchButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create search page
 		frame.repaint();
 		createSearchPage();
 	}
@@ -716,34 +710,34 @@ public class LogInPage implements ActionListener
 	//main menu button was clicked
 	public void mainMenuButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create main menu
 		frame.repaint();
 		createMainMenu();
 	}
 	
 	//watch movie button was clicked
-	public void playMovieButton(int i)
+	public void playMovieButton(int i) //i parameter holds value of displayed movies list that was clicked to play movie
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and play movie
 		frame.repaint();
-		currentMovie = moviesDisplayed.get(i);
+		currentMovie = moviesDisplayed.get(i); //add movie being played to current movie field
 		playMovie(moviesDisplayed.get(i));
 	}
 	
 	//search button 2 was clicked
 	public void searchButton2()
 	{
-		String temp = searchBox.getText();
-		frame.getContentPane().removeAll();
+		String temp = searchBox.getText(); //get text from search box
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results
 		createSearchPage();
-		searchMovies2(temp);
+		searchMovies2(temp); //call search movies method using string from search box
 		createSearchedMovies();
 	}
 	
 	//comedy search button was clicked
 	public void comedyButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results for comedy
 		createSearchPage();
 		searchMovies("Comedy");
 		createSearchedMovies();
@@ -752,7 +746,7 @@ public class LogInPage implements ActionListener
 	//action search button was clicked
 	public void actionButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results for action
 		createSearchPage();
 		searchMovies("Action");
 		createSearchedMovies();
@@ -761,7 +755,7 @@ public class LogInPage implements ActionListener
 	//horror search button was clicked
 	public void horrorButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results for horror
 		createSearchPage();
 		searchMovies("Horror");
 		createSearchedMovies();
@@ -770,7 +764,7 @@ public class LogInPage implements ActionListener
 	//romance search button was clicked
 	public void romanceButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results for romance
 		createSearchPage();
 		searchMovies("Romance");
 		createSearchedMovies();
@@ -779,7 +773,7 @@ public class LogInPage implements ActionListener
 	//scifi search button was clicked
 	public void scifiButton()
 	{
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear current page and create page returning search results for sci-fi
 		createSearchPage();
 		searchMovies("Scifi");
 		createSearchedMovies();
@@ -788,10 +782,10 @@ public class LogInPage implements ActionListener
 	//liked movie button was clicked
 	public void likedMovieButton()
 	{
-		currentUser.addWatchedMovie(currentMovie.getTitle());
-		for(String genre : currentMovie.getGenres())
+		currentUser.addWatchedMovie(currentMovie.getTitle()); //add title of current movie to user's watched movies
+		for(String genre : currentMovie.getGenres()) //add genres of current movie to user's liked genres
 			currentUser.addFavoriteGenre(genre);
-		frame.getContentPane().removeAll();
+		frame.getContentPane().removeAll(); //clear page and go back to main menu
 		frame.repaint();
 		createMainMenu();
 	}
@@ -799,8 +793,8 @@ public class LogInPage implements ActionListener
 	//disliked movie button was clicked
 	public void dislikedMovieButton()
 	{
-		currentUser.addWatchedMovie(currentMovie.getTitle());
-		frame.getContentPane().removeAll();
+		currentUser.addWatchedMovie(currentMovie.getTitle()); //add title of current movie to user's watched movies
+		frame.getContentPane().removeAll(); //clear page and go back to main menu
 		frame.repaint();
 		createMainMenu();
 	}

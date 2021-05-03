@@ -44,11 +44,11 @@ public class User
 	//setters
 	public void addWatchedMovie(String movie)
 	{
-		for(String title : watchedMovies)
+		for(String title : watchedMovies) //check if movie is already on record
 			if(movie.equals(title))
-				return;
-		watchedMovies.add(movie);
-		try 
+				return; //if movie is already on watched list, leave method and do not add again
+		watchedMovies.add(movie); //add movie if it is not alreadt on list
+		try //add movie to user's file
 		{
 			File file = new File(username + ".txt");
 			if(file.exists()) 
@@ -71,11 +71,11 @@ public class User
 	
 	public void addFavoriteGenre(String genre)
 	{
-		for(String likedGenre : favoriteGenres)
+		for(String likedGenre : favoriteGenres) //check to see if genres is already on user's liked genre
 			if(genre.equals(likedGenre))
-				return;
-		favoriteGenres.add(genre);
-		try 
+				return; //leave method and do not add ganres if already on list
+		favoriteGenres.add(genre); //add genre if not already on faborite genres list
+		try //write new favorite genre to user's file
 		{
 			File file = new File(username + ".txt");
 			if(file.exists()) 
